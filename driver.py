@@ -9,6 +9,12 @@
 import turtle
 import time
 import random
+import copy
+
+WIDTH = 6
+HEIGHT = 7
+
+DIFFICULTY = 4
 
 # create two buttons, prompting user to choose between two player or one player
 
@@ -26,7 +32,7 @@ class ButtonManager:
     def callback(self, x_click, y_click):
         ''' Parameters: coordinates of click
         '''
-        print("entered")
+        
         # print(x_click, y_click, self.buttons[0].x, self.buttons[0].y, self.buttons[0].textX)
         for button in self.buttons:
             if button.isWithinBounds(x_click, y_click):
@@ -352,13 +358,100 @@ class Game:
             returns which hole the computer chooses
         '''
         legalMoves = []
-        print(self.w_holes)
-        print(len(self.board))
+        
         for n in range(0, self.w_holes):
             if len(self.board[n]) < self.h_holes:
                 legalMoves.append(n)
 
-        return legalMoves[0] #random.randint(0, self.w_holes-1)
+        return self.winningMoves(copy.copy(self.board), DIFFICULTY, 0)  # legalMoves[0] #random.randint(0, self.w_holes-1)
+
+    # strategy is a brute force method to create a tree of possibilities
+    # and choosing that path which leads to a win. A path can be classified
+    # as either a regular win, or a strong win, one where the opponent at
+    # some point, is forced to concede as there is no option but victory for
+    # the computer
+
+    def winningMoves_aux(self, board, depth, level):
+        # list of wins depending on which index the computer chooses
+        
+        wins = 0
+        turn = ""
+        if self.compPlaysFirst:
+            turn = "r" if level%2 != 0 else "y"
+        else:
+            turn = "y" if level%2 != 0 else "r"
+        if level > depth:
+            return 0
+        opp = "r" if turn == "y" else "y"
+        size = 0
+        for col in board:
+                size += len(col)
+        if size == self.w_holes * self.h_holes:
+                return 0
+            
+        
+            
+        for move in range(0, self.w_holes):
+            if len(board[move]) > self.h_holes:
+                return 0
+            
+            # create a deep copy of board
+            board_copy = []
+            for col in self.board:
+                board_copy.append(copy.copy(col))
+            # check for any winner, remember to reset self.toPlay
+            # and self.board and self.winner!
+            self.toPlay = turn
+            self.board = board
+            
+            self.fetchWinner(move)
+            
+            self.toPlay = "r" if self.compPlaysFirst else "y"
+            # copying back the original board
+            self.board = []
+            for col in board_copy:
+                self.board.append(copy.copy(col))
+                
+            winner = self.winner
+            self.winner = ""
+            
+            board_copy = []
+            for col in board:
+                board_copy.append(copy.copy(col))
+            
+            if winner == ("r" if self.compPlaysFirst else "y"):
+                wins += 1
+            elif winner != "":
+                wins -= 2
+            else:
+                board_copy[move].append(turn)
+                wins += self.winningMoves_aux(board_copy, depth, level+1)
+
+        
+        return wins
+
+    def winningMoves(self, board, depth, level):
+
+        wins = {}
+        turn = "r" if self.compPlaysFirst else "y"
+
+        board = []
+        for col in self.board:
+            board.append(copy.copy(col))
+        
+        for i in range(0, self.w_holes):
+            if len(board[i]) >= self.h_holes:
+                continue
+            board[i].append(turn)
+            wins[i] = self.winningMoves_aux(board, depth, level)
+            board[i].pop()
+        print(wins)
+        maximum = min(wins.keys())
+        for i in wins:
+            if wins[i] > wins[maximum]:
+                maximum = i
+        return maximum
+
     
     def addCoinToBoard(self, buttonNumber):
         ''' Parameters: which button was pressed -int (range: 1-self.w_holes)
@@ -503,7 +596,7 @@ def createTwoPlayerGame(x, y):
         Return: none
         Creates a two player game
     '''
-    gameBoard = Game(False, (4,5))
+    gameBoard = Game(False, (WIDTH, HEIGHT))
 
 def createSinglePlayerGame(x, y):
     ''' Parameters: none
@@ -514,9 +607,10 @@ def createSinglePlayerGame(x, y):
     screen.clear()
     
     playFirst = Button((-100,30), "Play First (Red)",
-                       lambda x,y: Game(True, (4,5)))
-    playSecond = Button((-80,-30), "Play Second (Yellow)",
-                        lambda x,y: Game(True, (4,5), compPlaysFirst=True))
+                       lambda x,y: Game(True, (WIDTH, HEIGHT)))
+    playSecond = Button((-140,-30), "Play Second (Yellow)",
+                        lambda x,y: Game(True, (WIDTH, HEIGHT),
+                                         compPlaysFirst=True))
     buttonManager = ButtonManager([playFirst, playSecond])
     
 def main():
