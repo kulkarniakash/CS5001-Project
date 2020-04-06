@@ -5,6 +5,11 @@
     Driver file
     Note: remember to shift all class definitions to different files
     before production!
+
+    The Difficulty is set to 4 for single player mode. This may cause a slight
+    delay in the response of the computer after the human has played (2-4 seconds)
+    . For as faster albeit easier gaming experience, please adjust the difficulty\
+    to a lower level.
 '''
 import turtle
 import time
@@ -32,7 +37,8 @@ class ButtonManager:
     def callback(self, x_click, y_click):
         ''' Parameters: coordinates of click
         '''
-        
+        if not self.buttons:
+            return
         # print(x_click, y_click, self.buttons[0].x, self.buttons[0].y, self.buttons[0].textX)
         for button in self.buttons:
             if button.isWithinBounds(x_click, y_click):
@@ -58,6 +64,7 @@ class Button:
         self.clicked = False
 
         self.screen = turtle.Screen()
+        self.buttonTurtle = turtle.Turtle()
         self.screen.tracer(0)
         self.drawButton()
         
@@ -65,8 +72,8 @@ class Button:
             ''' Parameters: coordinates of point clicked
                 Return: whether the point is within the button
             '''
-            if x_click in range(self.x, self.textX) and \
-               y_click in range(self.y, self.y + 34):
+            if int(x_click) in range(int(self.x), int(self.textX)) and \
+               int(y_click) in range(int(self.y), int(self.y) + 34):
                 return True
             return False
         
@@ -75,14 +82,14 @@ class Button:
             Return: None
             draws button
         '''
-        buttonTurtle = turtle.Turtle()
-        buttonTurtle.ht()
-        buttonTurtle.up()
-        buttonTurtle.goto(self.x, self.y)
-        buttonTurtle.write(self.text, move=True, font=("Arial", 24, "normal"))
+        
+        self.buttonTurtle.ht()
+        self.buttonTurtle.up()
+        self.buttonTurtle.goto(self.x, self.y)
+        self.buttonTurtle.write(self.text, move=True, font=("Arial", 24, "normal"))
 
         
-        self.textX = buttonTurtle.xcor()
+        self.textX = self.buttonTurtle.xcor()
 
         
 ##        def callback(x_click,y_click) :
@@ -92,12 +99,12 @@ class Button:
 ##        # remember to unbind
 ##        self.screen.onclick(callback)
         
-        buttonTurtle.lt(90)
-        buttonTurtle.down()
-        buttonTurtle.goto(self.textX, self.y + 34)
-        buttonTurtle.goto(self.x, self.y + 34)
-        buttonTurtle.goto(self.x, self.y)
-        buttonTurtle.goto(self.textX, self.y)
+        self.buttonTurtle.lt(90)
+        self.buttonTurtle.down()
+        self.buttonTurtle.goto(self.textX, self.y + 34)
+        self.buttonTurtle.goto(self.x, self.y + 34)
+        self.buttonTurtle.goto(self.x, self.y)
+        self.buttonTurtle.goto(self.textX, self.y)
         self.screen.update()
         
 
@@ -112,7 +119,10 @@ class Game:
         screen = turtle.Screen()
         screen.onclick(None)
         screen.clear()
+        self.buttonManager = ButtonManager([])
+        self.sequenceOfMoves = []
         self.compPlaysFirst = compPlaysFirst
+        self.isCompTurn = True if compPlaysFirst else False
         # values of every filled hole on the board
         self.board = []
         # indicates whose turn it is, choices- "r" or "y", change to alternate
@@ -147,6 +157,8 @@ class Game:
         # scores of yellow and red
         self.redScore = 0
         self.yellowScore = 0
+        self.compsTurn = None
+        self.buttonManager = ButtonManager([])
         
         self.loadScores()
         self.displayScores()
@@ -211,6 +223,77 @@ class Game:
         '''
         for i in range(self.w_holes):
             self.board.append([])
+            
+        rewind = Button((self.width/2 + 20, 0), "Rewind", self.rewind)
+        self.buttonManager.buttons.append(rewind)
+        
+
+    def rewind(self, x, y):
+        
+        if not self.sequenceOfMoves or self.winner or self.isAnimating:
+            return
+        self.toPlay = "r" if self.toPlay == "y" else "y"
+        self.eraseLastCoin(self.sequenceOfMoves[-1])
+        self.board[self.sequenceOfMoves[-1]].pop()
+        self.sequenceOfMoves.pop()
+
+        compColor = "r" if self.compPlaysFirst else "y"
+        
+        if self.isSinglePlayer and self.toPlay == compColor:
+            self.isCompTurn = True
+            self.compsTurn = Button((self.width/2 + 40, -40), "Comp's Turn",
+            self.handleCompsTurnClick)
+
+            if len(self.buttonManager.buttons) == 1:
+                self.buttonManager.buttons.append(self.compsTurn)
+        elif self.isSinglePlayer:
+            # if self.compsTurn:
+                self.isCompTurn = False
+                self.compsTurn.buttonTurtle.clear()
+                self.compsTurn.callback = lambda x,y: 1
+                if len(self.buttonManager.buttons) == 2:
+                    self.buttonManager.buttons.pop()
+            
+        
+    def handleCompsTurnClick(self, x, y):
+        thinkingTurtle = turtle.Turtle()
+        thinkingTurtle.ht()
+        thinkingTurtle.up()
+        thinkingTurtle.goto(0, -self.height/2-40)
+        thinkingTurtle.write("Wait, computer is thinking",align="center",
+                                     font=("Arial", 24, "normal"))
+        self.handleCoinDrop(0, 0, self.compMove())
+        thinkingTurtle.clear()
+        self.compsTurn.buttonTurtle.clear()
+        self.compsTurn.callback = lambda x,y: 1
+        if len(self.buttonManager.buttons) == 2:
+            self.buttonManager.buttons.pop()
+        self.isCompTurn = False
+
+    def eraseLastCoin(self, buttonNumber):
+
+        screen = turtle.Screen()
+        i = self.w_holes - len(self.board[buttonNumber])
+        myCoin = turtle.Turtle()
+        myCoin.ht()
+        myCoin.up()
+        myCoin.fillcolor("white")
+        myCoin.lt(90)
+        x = -self.width/2 + (buttonNumber+1) * (2 * (self.radius) + \
+                        self.space) 
+        y = self.height/2 - 2 * i * (self.radius) - i * self.space \
+                + self.radius
+        myCoin.goto(x, y)
+        myCoin.down()
+        myCoin.begin_fill()
+            
+        myCoin.circle(self.radius)
+        myCoin.end_fill()
+
+        self.displayTurn()
+        screen.update()
+        
+        
 
     def displayTurn(self):
         ''' Parameters: none
@@ -434,7 +517,7 @@ class Game:
 
         wins = {}
         turn = "r" if self.compPlaysFirst else "y"
-
+        self.isAnimating = True
         board = []
         for col in self.board:
             board.append(copy.copy(col))
@@ -445,12 +528,14 @@ class Game:
             board[i].append(turn)
             wins[i] = self.winningMoves_aux(board, depth, level)
             board[i].pop()
-        print(wins)
+        
         maximum = min(wins.keys())
         for i in wins:
             if wins[i] > wins[maximum]:
                 maximum = i
+        self.isAnimating = False
         return maximum
+        
 
     
     def addCoinToBoard(self, buttonNumber):
@@ -459,6 +544,7 @@ class Game:
             Add the appropriate coin to self.board in the correct slot
         '''
         self.board[buttonNumber].append(self.toPlay)
+        self.sequenceOfMoves.append(buttonNumber)
         self.coinsPlayed += 1
         self.fetchWinner(buttonNumber)
         
@@ -497,6 +583,7 @@ class Game:
             if i != self.w_holes - len(self.board[buttonNumber]):
                 self.pause(0.05)
         self.isAnimating = False
+
         
 
     def handleCoinDrop(self, x, y, move=-1):
@@ -505,12 +592,16 @@ class Game:
             Return: none
             handles click event of black triangles
         '''
+        
         buttonNumber = move
         if self.winner != "" or self.coinsPlayed == self.w_holes*self.h_holes:
             return
         if move == -1:
             buttonNumber = (x + self.width/2) // (self.space + 2 * self.radius)
-        if len(self.board[int(buttonNumber)]) < self.h_holes and not self.isAnimating:
+                   
+        if len(self.board[int(buttonNumber)]) < self.h_holes and not self.isAnimating\
+           and not (self.isCompTurn and move == -1):
+            print("went in")
             # adds the data of the coin dropped to self.board
             self.addCoinToBoard(int(buttonNumber))
             # renders graphics of coin drop
@@ -522,14 +613,24 @@ class Game:
             elif self.coinsPlayed == self.w_holes * self.h_holes:
                 self.displayDraw()
                 return
+            
             self.toPlay = "y" if self.toPlay == "r" else "r"
         self.displayTurn()
-
-        if self.isSinglePlayer:
+        
+        if self.isSinglePlayer and not (self.isCompTurn and move == -1):
             compPlays = (self.compPlaysFirst and self.toPlay == "r") or \
                         (not self.compPlaysFirst and self.toPlay == "y")
             if compPlays:
+                self.isCompTurn = True
+                thinkingTurtle = turtle.Turtle()
+                thinkingTurtle.ht()
+                thinkingTurtle.up()
+                thinkingTurtle.goto(0, -self.height/2-40)
+                thinkingTurtle.write("Wait, computer is thinking",align="center",
+                                     font=("Arial", 24, "normal"))
                 self.handleCoinDrop(0, 0, move=self.compMove())
+                thinkingTurtle.clear()
+                self.isCompTurn = False
             else:
                 return
             
