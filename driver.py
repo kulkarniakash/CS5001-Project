@@ -29,14 +29,15 @@ class ButtonManager:
         '''
         self.buttons = buttons
 
-        self.screen = turtle.Screen()
+        screen = turtle.Screen()
         # remeber to unbind
-        self.screen.onclick(self.callback)
+        screen.onclick(self.callback)
         
 
     def callback(self, x_click, y_click):
         ''' Parameters: coordinates of click
         '''
+        
         if not self.buttons:
             return
         # print(x_click, y_click, self.buttons[0].x, self.buttons[0].y, self.buttons[0].textX)
@@ -44,7 +45,7 @@ class ButtonManager:
             if button.isWithinBounds(x_click, y_click):
                 button.callback(x_click, y_click)
                 button.clicked = True
-                screen = turtle.Screen()
+                # screen = turtle.Screen()
 
         
         
@@ -82,7 +83,6 @@ class Button:
             Return: None
             draws button
         '''
-        
         self.buttonTurtle.ht()
         self.buttonTurtle.up()
         self.buttonTurtle.goto(self.x, self.y)
@@ -116,10 +116,9 @@ class Game:
             width), whether the game is single player or not -bool
             Red gets to play first by default
         '''
-        screen = turtle.Screen()
-        screen.onclick(None)
-        screen.clear()
-        self.buttonManager = ButtonManager([])
+        
+        self.buttonManager = None
+        self.dummy = None
         self.sequenceOfMoves = []
         self.compPlaysFirst = compPlaysFirst
         self.isCompTurn = True if compPlaysFirst else False
@@ -150,24 +149,39 @@ class Game:
         # number of coins on the board
         self.coinsPlayed = 0
         # turtle for the displayTurn function
-        self.displayTurnTurtle = turtle.Turtle()
-        self.displayTurnTurtle.ht()
+        self.displayTurnTurtle = None# turtle.Turtle()
+        # self.displayTurnTurtle.ht()
         # name of file that stores the score
         self.filename = "score.txt"
         # scores of yellow and red
         self.redScore = 0
         self.yellowScore = 0
         self.compsTurn = None
-        self.buttonManager = ButtonManager([])
+
         
-        self.loadScores()
-        self.displayScores()
-        self.initializeBoard()
-        self.renderBoard(size)
+##        self.loadScores()
+##        self.displayScores()
+##        self.initializeBoard()
+##        self.renderBoard(size)
         
         
+        
+
+    def initializeScreen(self):
+        screen = turtle.Screen()
+        screen.onclick(None)
+        screen.clear()
         screen.setup(width=self.width+400, height=self.height+400)
+        self.displayTurnTurtle = turtle.Turtle()
+        self.displayTurnTurtle.ht()
         self.displayTurn()
+        
+        rewind = Button((self.width/2 + 20, 0), "Rewind", lambda x,y:\
+                        self.rewind(x,y))
+        
+        self.buttonManager = ButtonManager([rewind])
+        
+        
 
     def loadScores(self):
         ''' Parameters: none
@@ -223,9 +237,10 @@ class Game:
         '''
         for i in range(self.w_holes):
             self.board.append([])
+
+        
             
-        rewind = Button((self.width/2 + 20, 0), "Rewind", self.rewind)
-        self.buttonManager.buttons.append(rewind)
+        
         
 
     def rewind(self, x, y):
@@ -678,6 +693,7 @@ class Game:
 
         if self.isSinglePlayer and self.compPlaysFirst:
             self.handleCoinDrop(0, 0, move=self.compMove())
+            self.isCompTurn = False
             
         screen.register_shape("triangle", ((-self.radius/2, 0),(self.radius/2,0), (0, -40)))
         for i in range(1, self.w_holes+1):
@@ -697,7 +713,7 @@ def createTwoPlayerGame(x, y):
         Return: none
         Creates a two player game
     '''
-    gameBoard = Game(False, (WIDTH, HEIGHT))
+    initializeGame(False, (WIDTH, HEIGHT))
 
 def createSinglePlayerGame(x, y):
     ''' Parameters: none
@@ -708,11 +724,20 @@ def createSinglePlayerGame(x, y):
     screen.clear()
     
     playFirst = Button((-100,30), "Play First (Red)",
-                       lambda x,y: Game(True, (WIDTH, HEIGHT)))
+                       lambda x,y: initializeGame(True, (WIDTH, HEIGHT)))
     playSecond = Button((-140,-30), "Play Second (Yellow)",
-                        lambda x,y: Game(True, (WIDTH, HEIGHT),
+                        lambda x,y: initializeGame(True, (WIDTH, HEIGHT),
                                          compPlaysFirst=True))
     buttonManager = ButtonManager([playFirst, playSecond])
+
+def initializeGame(isSinglePlayer, size, compPlaysFirst=False):
+    
+    newGame = Game(isSinglePlayer, size, compPlaysFirst)
+    newGame.initializeScreen()
+    newGame.loadScores()
+    newGame.displayScores()
+    newGame.initializeBoard()
+    newGame.renderBoard((newGame.h_holes, newGame.w_holes))
     
 def main():
     
