@@ -1,0 +1,6 @@
+
+
+Testing of the graphics component of the program was done at each stage of development.
+A potential overflow of coins was tested for by attempting torepeatedly dropping coins 
+in the same column beyond full capacity. Superfluous clicks were tested for by clicking
+the same drop button rapidly in succession while a coin was still falling. 
