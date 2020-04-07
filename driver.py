@@ -43,7 +43,10 @@ def createSinglePlayerGame(width, height):
     playSecond = Button((-140,-30), "Play Second (Yellow)",
                         lambda x,y: initializeGame(True, (height, width),
                                          compPlaysFirst=True))
+    playFirst.drawButton()
+    playSecond.drawButton()
     buttonManager = ButtonManager([playFirst, playSecond])
+    buttonManager.initializeScreen()
 
 def initializeGame(isSinglePlayer, size, compPlaysFirst=False):
     
@@ -53,7 +56,9 @@ def initializeGame(isSinglePlayer, size, compPlaysFirst=False):
     newGame.displayScores()
     newGame.initializeBoard()
     newGame.renderBoard((newGame.h_holes, newGame.w_holes))
-    
+
+
+
 def main():
 
     option = input("Hey! Welcome to Connect 4. The default size of the board is"
@@ -77,7 +82,13 @@ def main():
                           lambda x,y: createSinglePlayerGame(width, height))
     twoPlayer = Button((-80,-30), "Two Player",
                           lambda x,y: createTwoPlayerGame(width, height))
+
+    singlePlayer.drawButton()
+    twoPlayer.drawButton()
     
     buttonManager = ButtonManager([singlePlayer, twoPlayer])
+    buttonManager.initializeScreen()
         
 main()
+
+

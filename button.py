@@ -12,7 +12,10 @@ class ButtonManager:
         ''' Paramters: list of Button objects to be added
         '''
         self.buttons = buttons
+        # variable used for testing
+        self.testVar = None
 
+    def initializeScreen(self):
         screen = turtle.Screen()
         # remeber to unbind
         screen.onclick(self.callback)
@@ -28,6 +31,7 @@ class ButtonManager:
         for button in self.buttons:
             if button.isWithinBounds(x_click, y_click):
                 button.callback(x_click, y_click)
+               
                 button.clicked = True
                 # screen = turtle.Screen()
 
@@ -48,10 +52,8 @@ class Button:
         self.text = text
         self.clicked = False
 
-        self.screen = turtle.Screen()
-        self.buttonTurtle = turtle.Turtle()
-        self.screen.tracer(0)
-        self.drawButton()
+        self.screen = None
+        
         
     def isWithinBounds(self, x_click, y_click):
             ''' Parameters: coordinates of point clicked
@@ -67,6 +69,9 @@ class Button:
             Return: None
             draws button
         '''
+        self.screen = turtle.Screen()
+        self.buttonTurtle = turtle.Turtle()
+        self.screen.tracer(0)
         self.buttonTurtle.ht()
         self.buttonTurtle.up()
         self.buttonTurtle.goto(self.x, self.y)
@@ -75,13 +80,6 @@ class Button:
         
         self.textX = self.buttonTurtle.xcor()
 
-        
-##        def callback(x_click,y_click) :
-##            if isWithinBounds(x_click, y_click):
-##                self.callback(x_click,y_click)
-##                self.clicked = True
-##        # remember to unbind
-##        self.screen.onclick(callback)
         
         self.buttonTurtle.lt(90)
         self.buttonTurtle.down()

@@ -76,8 +76,10 @@ class Game:
         
         rewind = Button((self.width/2 + 20, 0), "Rewind", lambda x,y:\
                         self.rewind(x,y))
+        rewind.drawButton()
         
         self.buttonManager = ButtonManager([rewind])
+        self.buttonManager.initializeScreen()
         
         
 
@@ -153,38 +155,22 @@ class Game:
             self.board[self.sequenceOfMoves[-1]].pop()
             self.sequenceOfMoves.pop()
 
-        # compColor = "r" if self.compPlaysFirst else "y"
-        
-##        if self.isSinglePlayer and self.toPlay == compColor:
-##            self.isCompTurn = True
-##            self.compsTurn = Button((self.width/2 + 40, -40), "Comp's Turn",
-##            self.handleCompsTurnClick)
-##
-##            if len(self.buttonManager.buttons) == 1:
-##                self.buttonManager.buttons.append(self.compsTurn)
-##        elif self.isSinglePlayer:
-##            # if self.compsTurn:
-##                self.isCompTurn = False
-##                self.compsTurn.buttonTurtle.clear()
-##                self.compsTurn.callback = lambda x,y: 1
-##                if len(self.buttonManager.buttons) == 2:
-##                    self.buttonManager.buttons.pop()
             
         
-    def handleCompsTurnClick(self, x, y):
-        thinkingTurtle = turtle.Turtle()
-        thinkingTurtle.ht()
-        thinkingTurtle.up()
-        thinkingTurtle.goto(0, -self.height/2-40)
-        thinkingTurtle.write("Wait, computer is thinking",align="center",
-                                     font=("Arial", 24, "normal"))
-        self.handleCoinDrop(0, 0, self.compMove())
-        thinkingTurtle.clear()
-        self.compsTurn.buttonTurtle.clear()
-        self.compsTurn.callback = lambda x,y: 1
-        if len(self.buttonManager.buttons) == 2:
-            self.buttonManager.buttons.pop()
-        self.isCompTurn = False
+##    def handleCompsTurnClick(self, x, y):
+##        thinkingTurtle = turtle.Turtle()
+##        thinkingTurtle.ht()
+##        thinkingTurtle.up()
+##        thinkingTurtle.goto(0, -self.height/2-40)
+##        thinkingTurtle.write("Wait, computer is thinking",align="center",
+##                                     font=("Arial", 24, "normal"))
+##        self.handleCoinDrop(0, 0, self.compMove())
+##        thinkingTurtle.clear()
+##        self.compsTurn.buttonTurtle.clear()
+##        self.compsTurn.callback = lambda x,y: 1
+##        if len(self.buttonManager.buttons) == 2:
+##            self.buttonManager.buttons.pop()
+##        self.isCompTurn = False
 
     def eraseLastCoin(self, buttonNumber):
 
@@ -356,11 +342,6 @@ class Game:
             Return: move -int 
             returns which hole the computer chooses
         '''
-        legalMoves = []
-        
-        for n in range(0, self.w_holes):
-            if len(self.board[n]) < self.h_holes:
-                legalMoves.append(n)
 
         return self.winningMoves(copy.copy(self.board), DIFFICULTY, 0)  # legalMoves[0] #random.randint(0, self.w_holes-1)
 
@@ -402,7 +383,7 @@ class Game:
             # and self.board and self.winner!
             self.toPlay = turn
             self.board = board
-            
+
             self.fetchWinner(move)
             
             self.toPlay = "r" if self.compPlaysFirst else "y"
@@ -417,11 +398,15 @@ class Game:
             board_copy = []
             for col in board:
                 board_copy.append(copy.copy(col))
+
             
             if winner == ("r" if self.compPlaysFirst else "y"):
                 wins += 1 * (depth - level + 1)
             elif winner != "":
-                wins -= 1 * (depth - level + 1)
+                #NEW CODE
+                if level == 2:
+                    return -1000
+                wins -= 1 * (depth - level + 1) 
             else:
                 board_copy[move].append(turn)
                 wins += self.winningMoves_aux(board_copy, depth, level+1)
@@ -442,6 +427,20 @@ class Game:
             if len(board[i]) >= self.h_holes:
                 continue
             board[i].append(turn)
+
+            temp = self.board
+            self.board = []
+            for col in board:
+                self.board.append(copy.copy(col))
+
+            self.fetchWinner(i)
+            if self.winner == turn:
+                self.board = temp
+                self.winner = ""
+                self.isAnimating = False
+                return i
+            self.board = temp
+            self.winner = ""
             wins[i] = self.winningMoves_aux(board, depth, level)
             board[i].pop()
         
