@@ -5,6 +5,8 @@ Level Accomplished: A+
 
 Classes defined:
 
+
+
 A) Game:
 
 NOTE: "Single player" in the program means one human player and one computer player
@@ -61,7 +63,72 @@ NOTE: paramter types and return types are written in comments in the original co
 
 4) displayScores(): displays scores above the board
 
-5) initializeBoard(): 
+5) initializeBoard(): initializes the board attribute with a number of nest empty lists, the number depending on the dimensions of the board
+
+6) rewind(x,y): goes back one move in the case of two players and two moves in the case of single player
+
+7) eraseLastCoin(buttonNumber): erases the coin present at the given button number. Is called by rewind. 
+
+8) displayTurn(): displays whose turn it is
+
+9) displayWinner()
+
+10) displayDraw(): displays the appropriate text when it is a draw
+
+11) fetchWinner(buttonNumber): analyzes the board and given the most recently played position, 
+infers whether there is a winner and who
+
+12) compMove(): calls winningMoves to strategically calculate the most optimal move according to the algorithm and then return that move
+
+13) winningMoves_aux(board, depth, level): a function that helps winningMoves(). The strategy of the computer is as follows: given at most "w_holes" possibles moves, construct a recursion tree that consists of the move as nodes and possible subsequent moves as children. Given a particular hypothetical board position that the computer has played, it calculates the total number of weighted victories that the computer can achieve with a partiuclar move that is within a certain distance from the root node. Victories are wieghted by how far away they are and losses are counted as negative victories. If a loss is incurred immediately after the computer's turn, it's assigned the value -1000. 
+
+14) winningMoves(board, depth, level): returns the most optimal move for the computer to make according to an algorithm. It sends the atmost "w_holes" possible moves as parameters to winningMoves_aux, stores the number of victories possible with that move in a list, and returns the move with the maximum number of victories. Victories can be negative.
+
+15) addCoinToBoard(buttonNumber): appends a coin value to the attribute "board"
+
+16) pause(seconds): pauses the program for certain number of seconds. Useful to give the illusion of a coin dropping.
+
+17) dropAnimation(buttonNumber): creates the animation of a coin falling through the holes
+
+18) handleCoinDrop(x, y, move=-1): callback function for when button is clicked. Figures out which button was clicked and then calls the necessary functions like addCoinToBoard and dropAnimation to complete the addition of a new coin to the board. The move parameter is set to -1 by default to indicate that the current move was initiated by a human. In case of a computer, move would assume a non-negative value.
+
+19) renderBoard(size): renders the image part of the board.
+
+
+B) ButtonManager:
+
+Attributes:
+
+1) buttons: a list of Button objects whose click events need to be handled
+2) testVar: an attribute not used in the functionality of the class but for testing whether click events are handled correctly
+
+Methods:
+
+1) initializeScreen(): binds callback to eventlistener
+
+2) callback(x_click, y_click): is responsible for calling the correct callback for a given click.
+
+C) Button:
+
+Attributes: 
+
+1) callback()
+
+2) x (int): x position of bottom left corner of button
+
+3) y (int): y position of bottom left corner of button
+
+4) textX (int): horizontal length of text
+
+5) text (string): text of button
+
+Methods:
+
+1) isWithinBounds(x_click, y_click): checks whether the coordinates of a click are within the box of the button.
+
+2) drawButton()
+
+
 
 
 
