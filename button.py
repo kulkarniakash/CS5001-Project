@@ -17,7 +17,6 @@ class ButtonManager:
 
     def initializeScreen(self):
         screen = turtle.Screen()
-        # remeber to unbind
         screen.onclick(self.callback)
         
 
@@ -33,9 +32,7 @@ class ButtonManager:
                 button.callback(x_click, y_click)
                
                 button.clicked = True
-                # screen = turtle.Screen()
 
-        
         
 
 class Button:

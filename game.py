@@ -160,10 +160,12 @@ class Game:
         self.eraseLastCoin(self.sequenceOfMoves[-1])
         self.board[self.sequenceOfMoves[-1]].pop()
         self.sequenceOfMoves.pop()
+        self.coinsPlayed -= 1
         if self.isSinglePlayer:
             self.eraseLastCoin(self.sequenceOfMoves[-1])
             self.board[self.sequenceOfMoves[-1]].pop()
             self.sequenceOfMoves.pop()
+            self.coinsPlayed -= 1
 
     def eraseLastCoin(self, buttonNumber):
         ''' Parameters: which position to erase from- int
@@ -517,17 +519,21 @@ class Game:
 
     def handleCoinDrop(self, x, y, move=-1):
         ''' Paramters: x , y -integers, position of click, move of computer,
-            if it's the computer's turn
+            if it's the computer's turn, move denotes move made by computer,
+            if it's a human clicking then move = -1
             Return: none
-            handles click event of black triangles
+            handles click event of black triangles to make a coin drop
         '''
         # which button was pressed
         buttonNumber = move
+        # return if there's a winner or if it's a draw
         if self.winner != "" or self.coinsPlayed == self.w_holes*self.h_holes:
             return
         if move == -1:
             buttonNumber = (x + self.width/2) // (self.space + 2 * self.radius)
-                   
+        # if the board is not full and there's no animation going on and
+        # a player has not clicked on the triangle when it's comp's turn,
+        # add coin to the board
         if len(self.board[int(buttonNumber)]) < self.h_holes and not self.isAnimating\
            and not (self.isCompTurn and move == -1):
             # adds the data of the coin dropped to self.board
