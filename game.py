@@ -13,16 +13,18 @@ import time
 import copy
 import random
 
+# ideal difficult level is 4 for a 6x7 board
 DIFFICULTY = 4
 
 class Game:
     def __init__(self, isSinglePlayer, size=(6,7), compPlaysFirst=False):
-        ''' Parameters: size of board (in number of circles) -tuple (height,
-            width), whether the game is single player or not -bool
-            Red gets to play first by default
+        ''' Parameters: isSinglePlayer - bool, size of board
+            (in number of circles) -tuple (height,width), whether the computer
+            plays first -bool Red gets to play first by default
         '''
         
         self.buttonManager = None
+        # stores every move played
         self.sequenceOfMoves = []
         self.compPlaysFirst = compPlaysFirst
         self.isCompTurn = True if compPlaysFirst else False
@@ -53,8 +55,7 @@ class Game:
         # number of coins on the board
         self.coinsPlayed = 0
         # turtle for the displayTurn function
-        self.displayTurnTurtle = None# turtle.Turtle()
-        # self.displayTurnTurtle.ht()
+        self.displayTurnTurtle = None
         # name of file that stores the score
         self.filename = "score.txt"
         # scores of yellow and red
@@ -66,6 +67,10 @@ class Game:
         
 
     def initializeScreen(self):
+        ''' Parameters: None
+            Return: none
+            creates the screen, the turn display and the rewind button
+        '''
         screen = turtle.Screen()
         screen.onclick(None)
         screen.clear()
@@ -87,7 +92,7 @@ class Game:
         ''' Parameters: none
             Return: none
             loads scores from file with name self.filename
-            scores are stored in the format r: 0 y: 0
+            scores are stored in the format r: <score> y: <score>
         '''
         try:
             with open(self.filename, "r") as infile:
@@ -140,8 +145,13 @@ class Game:
         
 
     def rewind(self, x, y):
+        ''' Parameters: x , y coorindates (int)
+            Return: none
+            A callback function that erases the move last played
+        '''
         
-        if not self.sequenceOfMoves or self.winner or self.isAnimating:
+        if not self.sequenceOfMoves or self.winner or self.isAnimating\
+           or self.coinsPlayed == self.w_holes * self.h_holes:
             return
         if self.isSinglePlayer and len(self.sequenceOfMoves) < 2:
             return
@@ -155,25 +165,11 @@ class Game:
             self.board[self.sequenceOfMoves[-1]].pop()
             self.sequenceOfMoves.pop()
 
-            
-        
-##    def handleCompsTurnClick(self, x, y):
-##        thinkingTurtle = turtle.Turtle()
-##        thinkingTurtle.ht()
-##        thinkingTurtle.up()
-##        thinkingTurtle.goto(0, -self.height/2-40)
-##        thinkingTurtle.write("Wait, computer is thinking",align="center",
-##                                     font=("Arial", 24, "normal"))
-##        self.handleCoinDrop(0, 0, self.compMove())
-##        thinkingTurtle.clear()
-##        self.compsTurn.buttonTurtle.clear()
-##        self.compsTurn.callback = lambda x,y: 1
-##        if len(self.buttonManager.buttons) == 2:
-##            self.buttonManager.buttons.pop()
-##        self.isCompTurn = False
-
     def eraseLastCoin(self, buttonNumber):
-
+        ''' Parameters: which position to erase from- int
+            Return: none
+            erases the last played coin/move
+        '''
         screen = turtle.Screen()
         i = self.h_holes - len(self.board[buttonNumber]) + 1
         myCoin = turtle.Turtle()
@@ -181,6 +177,7 @@ class Game:
         myCoin.up()
         myCoin.fillcolor("white")
         myCoin.lt(90)
+        # coordinates of coin to erase
         x = -self.width/2 + (buttonNumber+1) * (2 * (self.radius) + \
                         self.space) 
         y = self.height/2 - 2 * i * (self.radius) - i * self.space \
@@ -261,8 +258,11 @@ class Game:
         otherd = 0
 
         i = 1
+        # coordinates of most recently added button in terms of number of holes
         index_x = buttonNumber
         index_y = len(self.board[buttonNumber])-1
+        # checking that the while loops below don't access out of range "holes"
+        # on the board
         def overflowCheck():
             return index_x in range(0, self.w_holes) and\
                    index_y in range(0, len(self.board[index_x])) and\
@@ -343,17 +343,17 @@ class Game:
             returns which hole the computer chooses
         '''
 
-        return self.winningMoves(copy.copy(self.board), DIFFICULTY, 0)  # legalMoves[0] #random.randint(0, self.w_holes-1)
+        return self.winningMoves(copy.copy(self.board), DIFFICULTY, 0)
 
     # strategy is a brute force method to create a tree of possibilities
-    # and choosing that path which leads to a win. A path can be classified
-    # as either a regular win, or a strong win, one where the opponent at
-    # some point, is forced to concede as there is no option but victory for
-    # the computer
-
+    # and choosing that path which leads to a win.
+    
     def winningMoves_aux(self, board, depth, level):
-        # list of wins depending on which index the computer chooses
-        
+        ''' Parameters: hypothetical board state -list, max depth of recursion
+            tree -int, level current level of recursion tree
+            Return: number of possible victories (weighted)
+        '''
+            
         wins = 0
         turn = ""
         if self.compPlaysFirst:
@@ -362,8 +362,10 @@ class Game:
             turn = "y" if level%2 != 0 else "r"
         if level > depth:
             return 0
+        # turn of human player
         opp = "r" if turn == "y" else "y"
         size = 0
+        #checks to see if the board is a draw
         for col in board:
                 size += len(col)
         if size == self.w_holes * self.h_holes:
@@ -379,8 +381,9 @@ class Game:
             board_copy = []
             for col in self.board:
                 board_copy.append(copy.copy(col))
-            # check for any winner, remember to reset self.toPlay
-            # and self.board and self.winner!
+            # check for any winner. The fetchWinner function works with class
+            # attributes and thus these attributes need to be temporarily
+            # modified and then reset
             self.toPlay = turn
             self.board = board
 
@@ -403,9 +406,11 @@ class Game:
             if winner == ("r" if self.compPlaysFirst else "y"):
                 wins += 1 * (depth - level + 1)
             elif winner != "":
-                #NEW CODE
+                #if the human wins on the very next move, weight that heavily
+                #towards the negative side
                 if level == 2:
                     return -1000
+                #losses weighted negatively towards wins
                 wins -= 1 * (depth - level + 1) 
             else:
                 board_copy[move].append(turn)
@@ -415,10 +420,16 @@ class Game:
         return wins
 
     def winningMoves(self, board, depth, level):
-
+        ''' Parameters: hypothetical board state -list, max depth of recursion
+            tree -int, level current level of recursion tree
+            Return: number of possible victories (weighted)
+            Return: optimal move for computer -int
+        '''
         wins = {}
         turn = "r" if self.compPlaysFirst else "y"
+        # in order to avoid handling clicks when the computer is "thinking"
         self.isAnimating = True
+        #deep copy of self.board
         board = []
         for col in self.board:
             board.append(copy.copy(col))
@@ -465,6 +476,10 @@ class Game:
         
 
     def pause(self, seconds):
+        ''' Parameters: seconds -(int)
+            Return: none
+            pauses for the given number of seconds
+        '''
         then = time.time()
         while(time.time()-then < seconds):
             pass
@@ -480,7 +495,6 @@ class Game:
         myCoin.ht()
         myCoin.fillcolor("red" if self.toPlay == "r" else "yellow")
         myCoin.lt(90)
-        print(self.w_holes, "self.h_holes")
         for i in range(1, self.h_holes - len(self.board[buttonNumber])+2):
             myCoin.up()
             myCoin.clear()
@@ -507,7 +521,7 @@ class Game:
             Return: none
             handles click event of black triangles
         '''
-        
+        # which button was pressed
         buttonNumber = move
         if self.winner != "" or self.coinsPlayed == self.w_holes*self.h_holes:
             return
@@ -516,7 +530,6 @@ class Game:
                    
         if len(self.board[int(buttonNumber)]) < self.h_holes and not self.isAnimating\
            and not (self.isCompTurn and move == -1):
-            print(self.board)
             # adds the data of the coin dropped to self.board
             self.addCoinToBoard(int(buttonNumber))
             # renders graphics of coin drop

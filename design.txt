@@ -1,3 +1,38 @@
+Design of Project
+
+Disclaimers and Useful Information before play:
+
+1) "Single player" in the program means one human player and one computer player
+
+2) The score text above the board does not update until the next game.
+
+3) The single player option is built for a 6x7 board and will most likely take a very long time or even crash if the size of the board is greater than 6x7. One possible solution is to decrease the value of the DIFFICULTY constant found in game.py so that the algorithm that calculate the computer's next move has a shorter run time and thus faster game play.
+
+4) As hinted in the previous point, increasing the value of the DIFFICULTY constant will make the game harder but also exponentially slower
+
+5) Please run the driver.py file to play the game
+
+
+Features of the game:
+
+1) Buttons for oncreen options like single player mode, two player moder, computer plays first, computer plays second and rewind.
+
+2) Option to play against computer
+
+3) Falling coin animation
+
+4) Computer play strategically. It traverses all possible sequences of moves upto a certain depth and calculates the optimal move based on the number of victories each possible move offers. A more detailed description of strategy is available in the methods section of Game.
+
+5) Option to rewind/reverse a move played. The functionality differs slightly between single player and two player modes.
+
+
+Salient features of design:
+
+1) The buttons on every screen are instances of the Button class
+
+2) Recursion was used to calculate the computer's next move
+
+3) The ButtonManager class manages clickevents for multiple buttons
 
 
 
@@ -6,13 +41,10 @@ Level Accomplished: A+
 Classes defined:
 
 
-
 A) Game:
 
-NOTE: "Single player" in the program means one human player and one computer player
+NOTE: 
 Attributes:
-
-NOTE: The score text above the board does not update until the next game.
 
 1) buttonManager (None or ButtonManager): handles clickevents for possibly multiple buttons
 
@@ -130,6 +162,17 @@ Methods:
 
 
 
+Data structures used: lists (for the board, sequenceOfMoves, etc.), dictionary (for storing the number of wins for each move the computer played), stack (sequenceOfMoves implemented using lists), tuple (for storing coordinates and size of board)
+
+Non-class functions:
+
+1) createTwoPlayerGame(width, height)
+
+2) createSinglePlayerGame(width, height): clears the screen and prompts the user for the choice of playing first or second in the form of buttons. 
+
+3) initializeGame(isSinglePlayer, size, comPlaysFirst=False): initializes a new game with the given parameters. This includes creating the screen, loading scores, rendering the board, etc.
+
+4) main(): Prompts the user with choices to play single player or two player and asks the user to set the dimensions of the board.
 
 
 
